@@ -8,7 +8,7 @@ class TileType(Enum):
     ROOM = 'R'
     CORRIDOR = 'C'
 
-    @                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         method
+    @staticmethod
     def get_type(code):
         if code == 'W':
             return TileType.WALL
