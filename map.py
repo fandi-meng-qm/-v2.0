@@ -1,4 +1,3 @@
-from position import Position
 from tile import Tile, TileType
 
 
