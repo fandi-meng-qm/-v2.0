@@ -31,17 +31,15 @@ class Tile:
         self.__position = Position(x, y)
         self.__type = tile_type
 
-    def get_x(self):
-        return self.__position.get_x()
-
-    def get_y(self):
-        return self.__position.get_y()
-
     def get_position(self):
-        return self.__position.get_position()
+        return self.__position
+
+    def get_coordinate(self):
+        return self.__position.get_coordinate()
 
     def get_type(self):
         return self.__type
 
     def __str__(self):
-        return 'Tile x=%d y=%d %s' % (self.get_x(), self.get_y(), self.__type)
+        x, y = self.get_coordinate()
+        return 'Tile x=%d y=%d %s' % (x, y, self.__type)

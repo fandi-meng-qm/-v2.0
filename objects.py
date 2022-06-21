@@ -1,7 +1,6 @@
 from position import Position
-from enum import Enum
+from record import *
 import pygame
-import random
 
 
 class GameObject:
@@ -9,19 +8,16 @@ class GameObject:
     _display = True
 
     def __init__(self, x, y):
-        self.__position = Position(x, y)
-
-    def get_x(self):
-        return self.__position.get_x()
-
-    def get_y(self):
-        return self.__position.get_y()
+        self._position = Position(x, y)
 
     def get_position(self):
-        return self.__position.get_position()
+        return self._position
+
+    def get_coordinate(self):
+        return self._position.get_coordinate()
 
     def set_position(self, x, y):
-        self.__position = Position(x, y)
+        self._position = Position(x, y)
 
 
 class Action(Enum):
@@ -35,23 +31,23 @@ class Action(Enum):
 
 
 class Role(GameObject):
-    __name = None
+    __type = None
     __good_at = None
     __weapon = None
     __alive = True
     __movable = True
     __auto = True
-    __game = None
+    __ai = None
 
-    def __init__(self, x, y, name, good_at):
+    def __init__(self, x, y, role_type, good_at):
         super().__init__(x, y)
-        self.__name = name
+        self.__type = role_type
         self.__good_at = good_at
-        if name == 'victim':
+        if role_type == RoleType.VICTIM:
             self.__movable = False
 
-    def get_name(self):
-        return self.__name
+    def get_type(self):
+        return self.__type
 
     def is_good_at(self):
         return self.__good_at
@@ -76,12 +72,15 @@ class Role(GameObject):
 
     def set_human_play(self):
         self.__auto = False
+        self.__ai = None
+
+    def set_ai(self, ai):
+        self.__ai = ai
 
     # take random action for AI player
     def move(self, actions):
         if self.__auto:
-            index = random.randint(0, len(actions) - 1)
-            return actions[index]
+            return self.__ai.next(self._position, actions)
         else:
             mark = True
             action = None
@@ -111,7 +110,8 @@ class Role(GameObject):
             return action
 
     def __str__(self):
-        return 'Role: %s x=%d y=%d' % (self.__name, self.get_x(), self.get_y())
+        x, y = self.get_coordinate()
+        return '%s x=%d y=%d' % (self.get_type(), x, y)
 
 
 class WeaponType(Enum):
@@ -119,7 +119,7 @@ class WeaponType(Enum):
     ROPE = 'Rope'
     POISON = 'Poison'
 
-    def get_type(self):
+    def __str__(self):
         return self.value
 
 
@@ -140,14 +140,15 @@ class Weapon(GameObject):
     def is_collectable(self):
         return self.__collectable
 
-    def get_position(self):
+    def get_coordinate(self):
         if self.__owner is not None:
-            return self.__owner.get_position()
-        return super().get_position()
+            return self.__owner.get_coordinate()
+        return super().get_coordinate()
 
     def get_type(self):
         return self.__type
 
     def __str__(self):
-        return 'Weapon: %s x=%d y=%d' % (self.__type.get_type(), self.get_x(), self.get_y())
+        x, y = self.get_coordinate()
+        return 'Weapon: %s x=%d y=%d' % (self.get_type(), x, y)
 

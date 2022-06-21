@@ -1,8 +1,6 @@
-import pygame
 import constant
-import random
-from tile import *
-from objects import *
+import time
+from algorithm import *
 from game import DeadlyHotel
 
 
@@ -17,16 +15,22 @@ class DeadlyHotelGUI(DeadlyHotel):
     __role_display = []
     __weapon_img = []
     __role = None
+    __ai = False
 
-    def __init__(self, turns):
+    def __init__(self, turns, ai):
         super().__init__(turns)
+        self.__ai = ai
 
     def init(self):
         pygame.init()
         super().init()
         index = random.randint(0, len(self._roles) - 2)
         self.__role = self._roles[index]
-        self.__role.set_human_play()
+        if not self.__ai:
+            self.__role.set_human_play()
+        else:
+            ai = RandomAction(self._map, self._destinations)
+            self.__role.set_ai(ai)
         self.__init_window()
         self.__init_images()
         self.__draw_map()
@@ -71,7 +75,7 @@ class DeadlyHotelGUI(DeadlyHotel):
         self.__role_display = []
         for i in range(0, len(self._roles)):
             role = self._roles[i]
-            x, y = role.get_position()
+            x, y = role.get_coordinate()
             if not role.is_alive():
                 self.__role_display.append(self.__role_dead_img[i])
             else:
@@ -86,7 +90,7 @@ class DeadlyHotelGUI(DeadlyHotel):
         for i in range(0, len(self.__weapon_img)):
             weapon = self._weapons[i]
             if weapon.is_collectable():
-                x, y = weapon.get_position()
+                x, y = weapon.get_coordinate()
                 self.__window.blit(self.__weapon_img[i], (constant.tile_width * y, constant.tile_height * x))
 
     def __draw_info(self):
@@ -100,8 +104,9 @@ class DeadlyHotelGUI(DeadlyHotel):
         self.__window.blit(surface, (10, text_begin_height + 2 * constant.font_height))
         surface, rect = font.render('Star stands for victim, who can not move.', constant.black)
         self.__window.blit(surface, (10, text_begin_height + 3 * constant.font_height))
-        surface, rect = font.render('You are ' + self.__role.get_name(), constant.red)
-        self.__window.blit(surface, (10, text_begin_height + 4 * constant.font_height))
+        if not self.__ai:
+            surface, rect = font.render('You are ' + self.__role.get_type().value, constant.red)
+            self.__window.blit(surface, (10, text_begin_height + 4 * constant.font_height))
         surface, rect = font.render('WASD for moving, SPACE for pick up weapon or kill.', constant.blue)
         self.__window.blit(surface, (10, text_begin_height + 5 * constant.font_height))
 
@@ -115,16 +120,23 @@ class DeadlyHotelGUI(DeadlyHotel):
         wait_role = []
         turn = 1
         while turn < self._turns + 1:
-            for role in self._roles:
-                if role != self._roles[3] and role in wait_role:
+            for i in range(0, 3):
+                role = self._roles[i]
+                if role in wait_role:
                     wait_role.remove(role)
                     continue
                 actions = self._get_legal_actions(role)
                 action = role.move(actions)
+                '''
+                if role is not self.__role:
+                    print('%s is at %s want to %s in turn %d' % (role.get_type(), str(role.get_position()), action, turn))
+                '''
                 if action == Action.KILL and role.get_weapon().get_type() != role.is_good_at():
                     wait_role.append(role)
                 self._update_state(role, action, turn)
             turn += 1
+            if self.__ai:
+                time.sleep(0)
             self.update_gui()
 
     def finish_gui(self):
@@ -133,16 +145,17 @@ class DeadlyHotelGUI(DeadlyHotel):
 
     def finish(self):
         super().finish()
-        while True:
-            event = pygame.event.wait()
-            if event.type == pygame.QUIT:
-                break
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+        if not self.__ai:
+            while True:
+                event = pygame.event.wait()
+                if event.type == pygame.QUIT:
                     break
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        break
 
 
-gui = DeadlyHotelGUI(50)
+gui = DeadlyHotelGUI(50, False)
 gui.init()
 gui.loop()
 gui.finish()

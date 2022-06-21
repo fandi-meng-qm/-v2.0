@@ -1,6 +1,6 @@
 from map import Map
-from objects import *
-from tile import *
+from algorithm import *
+from detective import *
 import constant
 import random
 
@@ -8,6 +8,7 @@ import random
 class DeadlyHotel:
     _map_code = 1
     _map = None
+    _destinations = []
     _roles = []
     _weapons = []
     _role_origins = []
@@ -30,19 +31,35 @@ class DeadlyHotel:
 
     def init(self):
         self._map = Map('map/' + str(self._map_code) + '.txt')
+        self._init_destinations()
         self._init_roles()
         self._init_weapons()
 
+    def _init_destinations(self):
+        if self._map_code == 1:
+            self._destinations.append(Position(1, 1))  # A
+            self._destinations.append(Position(1, 4))  # B
+            self._destinations.append(Position(1, 7))  # C
+            self._destinations.append(Position(1, 10))  # D
+            self._destinations.append(Position(1, 13))  # E
+            self._destinations.append(Position(1, 16))  # F
+            self._destinations.append(Position(6, 2))  # G
+            self._destinations.append(Position(6, 9))  # H
+            self._destinations.append(Position(6, 16))  # I
+
     def _init_roles(self):
         roles = 4
-        names = ['cleaner', 'writer', 'waitress', 'victim']
+        types = [RoleType.CLEANER, RoleType.WRITER, RoleType.WAITRESS, RoleType.VICTIM]
         weapons = [WeaponType.KNIFE, WeaponType.ROPE, WeaponType.POISON, None]
         self._init_role_origins()
         for i in range(0, roles):
             index = random.randint(0, len(self._role_origins) - 1)
-            x, y = self._role_origins.pop(index).get_position()
-            role = Role(x, y, names[i], weapons[i])
+            x, y = self._role_origins.pop(index).get_coordinate()
+            role = Role(x, y, types[i], weapons[i])
             self._roles.append(role)
+        for i in range(0, roles - 1):
+            ai = GoodGuyBFS(self._map, self._destinations)
+            self._roles[i].set_ai(ai)
 
     # generate available init positions for roles
     def _init_role_origins(self):
@@ -59,7 +76,7 @@ class DeadlyHotel:
         self._init_weapon_origins()
         for i in range(0, weapons):
             index = random.randint(0, len(self._weapon_origins) - 1)
-            x, y = self._weapon_origins.pop(index).get_position()
+            x, y = self._weapon_origins.pop(index).get_coordinate()
             weapon = Weapon(x, y, weapon_type[i])
             self._weapons.append(weapon)
 
@@ -75,17 +92,18 @@ class DeadlyHotel:
         if role == self._roles[3]:
             actions.append(Action.WAIT)
         else:
-            x, y = role.get_position()
+            x, y = role.get_coordinate()
             # check weapon
             if role.get_weapon() is None:
                 for weapon in self._weapons:
-                    weapon_x, weapon_y = weapon.get_position()
-                    if x == weapon_x and y == weapon_y:
-                        actions.append(Action.PICK)
-                        break
+                    weapon_x, weapon_y = weapon.get_coordinate()
+                    if weapon.is_collectable():
+                        if x == weapon_x and y == weapon_y:
+                            actions.append(Action.PICK)
+                            break
             # check victim
             victim = self._roles[3]
-            victim_x, victim_y = victim.get_position()
+            victim_x, victim_y = victim.get_coordinate()
             if victim.is_alive():
                 if x == victim_x and y == victim_y:
                     if role.get_weapon() is not None:
@@ -114,19 +132,20 @@ class DeadlyHotel:
         if role == victim:
             return
         else:
-            x, y = role.get_position()
+            x, y = role.get_coordinate()
             if action == Action.WAIT:
                 return
             elif action == Action.PICK:
                 for weapon in self._weapons:
-                    weapon_x, weapon_y = weapon.get_position()
+                    weapon_x, weapon_y = weapon.get_coordinate()
                     if x == weapon_x and y == weapon_y:
                         weapon.picked(role)
                         role.pick_weapon(weapon)
                         break
             elif action == Action.KILL:
                 victim.killed()
-                self._records.append(role.get_name() + " killed victim in turn " + str(turn))
+                record = DeathRecord(role.get_position(), turn, role.get_weapon().get_type())
+                self._records.append(record)
             elif action == Action.MOVE_UP:
                 role.set_position(x - 1, y)
                 self.record_meeting(role, turn)
@@ -141,19 +160,15 @@ class DeadlyHotel:
                 self.record_meeting(role, turn)
 
     def record_meeting(self, role, turn):
-        x, y = role.get_position()
+        x, y = role.get_coordinate()
         victim = self._roles[3]
         for other_role in self._roles:
             if other_role != role and other_role != victim:
-                other_x, other_y = other_role.get_position()
-                if x == other_x - 1 and y == other_y:
-                    self._records.append(role.get_name() + " meet " + other_role.get_name() + " in turn " + str(turn))
-                if x == other_x + 1 and y == other_y:
-                    self._records.append(role.get_name() + " meet " + other_role.get_name() + " in turn " + str(turn))
-                if x == other_x and y == other_y + 1:
-                    self._records.append(role.get_name() + " meet " + other_role.get_name() + " in turn " + str(turn))
-                if x == other_x and y == other_y - 1:
-                    self._records.append(role.get_name() + " meet " + other_role.get_name() + " in turn " + str(turn))
+                other_x, other_y = other_role.get_coordinate()
+                if (x == other_x - 1 and y == other_y) or (x == other_x + 1 and y == other_y) \
+                        or (x == other_x and y == other_y + 1) or (x == other_x and y == other_y - 1):
+                    record = MeetRecord(role.get_position(), turn, role.get_type(), other_role.get_type())
+                    self._records.append(record)
 
     def loop(self):
         wait_role = []
@@ -173,3 +188,6 @@ class DeadlyHotel:
     def finish(self):
         for record in self._records:
             print(record)
+        ai = GoodGuyBFS(self._map, self._destinations)
+        detective = Detective(self._records, ai)
+        detective.detect()
