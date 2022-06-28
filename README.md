@@ -25,7 +25,7 @@ action(boolean){
    false: wait human's command  
 }
 
-4.GameState: //   
+4. GameState: //   
 Map  
 Role[]  
 Record[]  
