@@ -1,0 +1,128 @@
+1. game.py // main flow of the game
+class DeadlyHotel // define the class
+def display() // print the map and other content
+def init()
+{
+   map
+   room
+   role
+   Position of the role
+   Weapon
+   The position of the weapon
+}
+def legalactions() //Judge whether the action is compliant
+def updatestate() //update the state
+def recordmeeting() //record the meeting
+def loop() //Update game status per turn 
+def finish(){
+   Print the report
+   NPC AI-BFS
+   call the detective program
+}
+
+2. gamegui.py // GUI
+class DeadlyHotelGUI // define the class
+def init(){
+  Main flow init
+  Different players: human/potential AI agent
+  Init the window
+  Init the picture 
+  Paint map
+  Paint role
+  Paint weapon
+  Paint the introduction
+}
+def updategui() //update the gui
+def loop(){
+   Update the game state  
+   Reserved AI agent operation
+   Call updategui()
+}
+def finish() //end
+
+3. map.py // 
+class Map //
+def loadmap //
+def get(){
+  Ger row
+  Get column
+  Get tile type
+}
+
+4. tile.py // 
+class tiletype // define the class of the tile
+def gettype //get tile type
+class tile // define the class of the position of the tile
+def get(){
+  Get the position
+  Get the coordinate
+  Get the type
+}
+  
+5. objects.py // objects in the game
+class GameObject //define the class of the objects
+class Action //define the class of the actions
+class Role //define the class of the roles
+def move{
+   Reserved AI agent actions, currently random actions
+   Human player's action
+}
+class WeaponType //define the class of the weapon type
+class Weapon //define the class of the weapon
+def picked //two states: picked or not
+
+6.position.py // Game position coordinates
+
+7.constant.py //constant in the gam
+Map coding
+Tile size
+colour
+
+8.algorithm.py //algorithm in the game
+class AI //
+def nextdestination //Random choose next room
+def next //Random next action
+def neighbors //Judge BFS adjacent nodes
+class RandomAction //Define random actions and reserve for AI agent algorithm
+class GoodGuyBFS //define the action of the npc
+def bfs // npc's action based on BFS
+def findpath // find the short path
+
+9.detective.py //detective system
+class Detective //define the class
+def init(){
+  Report
+  AI
+  Doubt value
+  Room
+  Room of weapon
+}
+def havemurdertime //
+def passsameroom //
+def passweaponroom //
+def norecords //
+def detect //
+(rules and calculate of the doubt value)
+10.record.py //game record
+class EventType //define the class of the event type
+class RoleType //define the class of the role type
+class Record //define the class of the record
+def get(){
+  Get the event type
+  Get the position
+  Get the turn
+  }
+class DeathRecord //define the class of the death record
+class MeetRecord //define the class of the meet reoord
+
+
+（Parts to be supplemented or improved）
+11.gamestate.py // 
+①save the game state
+②save the simulation of the ai
+③add the detective and the simulation of the ai agent game play to the gui
+
+
+12.state.py // MCTS
+
+13.env.py: //OpenAIGym environment
